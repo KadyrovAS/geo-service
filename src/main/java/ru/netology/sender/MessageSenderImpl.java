@@ -23,6 +23,9 @@ public class MessageSenderImpl implements MessageSender {
         String ipAddress = String.valueOf(headers.get(IP_ADDRESS_HEADER));
         if (ipAddress != null && !ipAddress.isEmpty()) {
             Location location = geoService.byIp(ipAddress);
+
+            Country country = location.getCountry();
+
             System.out.printf("Отправлено сообщение: %s", localizationService.locale(location.getCountry()));
             return localizationService.locale(location.getCountry());
         }
