@@ -1,16 +1,29 @@
 package geo;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import ru.netology.entity.Country;
 import ru.netology.entity.Location;
 import ru.netology.geo.GeoService;
 import ru.netology.geo.GeoServiceImpl;
 
+import java.util.stream.Stream;
+
 public class GeoServiceTest {
+    @Getter
+    @AllArgsConstructor
+    static class GeoValue{
+        private Location location;
+        private String ip;
+    }
+
     static GeoService sut;
 
     @BeforeAll
@@ -19,27 +32,16 @@ public class GeoServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"127.0.0.1", "172.0.32.11", "96.44.183.149", "172.", "96."})
-    public void byIpTest(String ip) {
-        Location locationExpected = null;
-        if (ip.equals("127.0.0.1"))
-            locationExpected = new Location(null, null, null, 0);
-        else if (ip.equals("172.0.32.11"))
-            locationExpected = new Location("Moscow", Country.RUSSIA, "Lenina", 15);
-        else if (ip.equals("96.44.183.149"))
-            locationExpected = new Location("New York", Country.USA, " 10th Avenue", 32);
-        else if (ip.startsWith("172"))
-            locationExpected = new Location("Moscow", Country.RUSSIA, null, 0);
-        else if (ip.startsWith("96"))
-            locationExpected = new Location("New York", Country.USA, null, 0);
+    @MethodSource("getSource")
+    public void byIpTest(GeoValue geoValue) {
+        Location locationExpected = geoValue.getLocation();
+        Location locationActual = sut.byIp(geoValue.getIp());
 
-        Location locationActual = sut.byIp(ip);
         Assertions.assertEquals(locationExpected.getCountry(), locationActual.getCountry());
         Assertions.assertEquals(locationExpected.getCity(), locationActual.getCity());
         Assertions.assertEquals(locationExpected.getStreet(), locationActual.getStreet());
         Assertions.assertEquals(locationExpected.getBuiling(), locationActual.getBuiling());
     }
-
     @Test
     public void byCoordinatesTest() {
         final double latitudeExpected = Math.random();
@@ -47,5 +49,20 @@ public class GeoServiceTest {
         Assertions.assertThrows(RuntimeException.class, () -> {
             Location locationActual = sut.byCoordinates(latitudeExpected, longitudeExpected);
         });
+    }
+
+    public static Stream<GeoValue>getSource(){
+        return Stream.of(
+                new GeoValue(new Location(null, null, null, 0),
+                        "127.0.0.1"),
+                new GeoValue(new Location("Moscow", Country.RUSSIA, "Lenina", 15),
+                        "172.0.32.11"),
+                new GeoValue(new Location("New York", Country.USA, " 10th Avenue", 32),
+                        "96.44.183.149"),
+                new GeoValue(new Location("Moscow", Country.RUSSIA, null, 0),
+                        "172."),
+                new GeoValue(new Location("New York", Country.USA, null, 0),
+                        "96.")
+        );
     }
 }

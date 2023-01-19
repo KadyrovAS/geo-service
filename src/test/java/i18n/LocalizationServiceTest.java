@@ -1,5 +1,8 @@
 package i18n;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -9,9 +12,18 @@ import ru.netology.entity.Country;
 import ru.netology.i18n.LocalizationService;
 import ru.netology.i18n.LocalizationServiceImpl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class LocalizationServiceTest {
+    @Getter
+    @AllArgsConstructor
+    static class GeoLocal{
+        private Country country;
+        private String greeting;
+    }
     static LocalizationService sut;
 
     @BeforeAll
@@ -20,20 +32,19 @@ public class LocalizationServiceTest {
     }
 
     @ParameterizedTest
-    @MethodSource("getCountries")
-    public void localizationServiceTest(Country countryExpected){
-        String messageExpected;
-        if (countryExpected == Country.RUSSIA)
-            messageExpected = "Добро пожаловать";
-        else
-            messageExpected = "Welcome";
+    @MethodSource("getSource")
+    public void localizationServiceTest(GeoLocal geoLocal){
+        System.out.println(geoLocal);
+        String messageExpected = geoLocal.getGreeting();
 
-        String messageActual = sut.locale(countryExpected);
+        String messageActual = sut.locale(geoLocal.getCountry());
         Assertions.assertEquals(messageExpected, messageActual);
     }
 
-    public static Stream<Arguments> getCountries(){
-        Country[] countries = Country.values();
-        return Stream.of(Arguments.of(countries));
+    public static Stream<GeoLocal> getSource(){
+         List<GeoLocal>geoLocals = new ArrayList<>();
+         Arrays.stream(Country.values()).
+                 forEach(x->geoLocals.add(new GeoLocal(x, x == Country.RUSSIA ? "Добро пожаловать": "Welcome")));
+         return geoLocals.stream();
     }
 }
